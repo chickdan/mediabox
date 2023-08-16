@@ -50,6 +50,7 @@ if [ -e 1.env ]; then
     dldirectory=$(grep DLDIR 1.env | cut -d = -f2)
     tvdirectory=$(grep TVDIR 1.env | cut -d = -f2)
     miscdirectory=$(grep MISCDIR 1.env | cut -d = -f2)
+    bookdirectory=$(grep BOOKDIR 1.env | cut -d = -f2)
     moviedirectory=$(grep MOVIEDIR 1.env | cut -d = -f2)
     musicdirectory=$(grep MUSICDIR 1.env | cut -d = -f2)
     # Echo back the media directioies, and other info to see if changes are needed
@@ -57,6 +58,7 @@ if [ -e 1.env ]; then
     printf "Your DOWNLOAD Directory is: %s \\n" "$dldirectory"
     printf "Your TV Directory is: %s \\n" "$tvdirectory"
     printf "Your MISC Directory is: %s \\n" "$miscdirectory"
+    printf "Your BOOK Directory is: %s \\n" "$bookdirectory"
     printf "Your MOVIE Directory is: %s \\n" "$moviedirectory"
     printf "Your MUSIC Directory is: %s \\n" "$musicdirectory"
     printf "\\n\\n"
@@ -120,6 +122,7 @@ printf "\\n\\n"
 read -r -p "Where do you store your DOWNLOADS? (Please use full path - /path/to/downloads ): " dldirectory
 read -r -p "Where do you store your TV media? (Please use full path - /path/to/tv ): " tvdirectory
 read -r -p "Where do you store your MISC media? (Please use full path - /path/to/misc ): " miscdirectory
+read -r -p "Where do you store your BOOK media? (Please use full path - /path/to/books ): " bookdirectory
 read -r -p "Where do you store your MOVIE media? (Please use full path - /path/to/movies ): " moviedirectory
 read -r -p "Where do you store your MUSIC media? (Please use full path - /path/to/music ): " musicdirectory
 fi
@@ -127,6 +130,7 @@ if [ "$diranswer" == "n" ]; then
 read -r -p "Where do you store your DOWNLOADS? (Please use full path - /path/to/downloads ): " dldirectory
 read -r -p "Where do you store your TV media? (Please use full path - /path/to/tv ): " tvdirectory
 read -r -p "Where do you store your MISC media? (Please use full path - /path/to/misc ): " miscdirectory
+read -r -p "Where do you store your BOOK media? (Please use full path - /path/to/books ): " bookdirectory
 read -r -p "Where do you store your MOVIE media? (Please use full path - /path/to/movies ): " moviedirectory
 read -r -p "Where do you store your MUSIC media? (Please use full path - /path/to/music ): " musicdirectory
 fi
@@ -148,6 +152,10 @@ if [ -z "$miscdirectory" ]; then
     mkdir -p content/misc
     miscdirectory="$PWD/content/misc"
 fi
+if [ -z "$bookdirectory" ]; then
+    mkdir -p content/movies
+    bookdirectory="$PWD/content/books"
+fi
 if [ -z "$moviedirectory" ]; then
     mkdir -p content/movies
     moviedirectory="$PWD/content/movies"
@@ -160,7 +168,6 @@ fi
 mkdir -p delugevpn
 mkdir -p delugevpn/config/openvpn
 mkdir -p historical/env_files
-mkdir -p jackett
 mkdir -p jellyfin
 mkdir -p lidarr
 mkdir -p nzbget
@@ -170,6 +177,7 @@ mkdir -p "plex/Library/Application Support/Plex Media Server/Logs"
 mkdir -p portainer
 mkdir -p prowlarr
 mkdir -p radarr
+mkdir -p readarr
 mkdir -p sonarr
 mkdir -p tautulli
 mkdir -p tdarr
@@ -232,6 +240,7 @@ echo "PWD=$PWD"
 echo "DLDIR=$dldirectory"
 echo "TVDIR=$tvdirectory"
 echo "MISCDIR=$miscdirectory"
+echo "BOOKDIR=$bookdirectory"
 echo "MOVIEDIR=$moviedirectory"
 echo "MUSICDIR=$musicdirectory"
 echo "PIAUNAME=$piauname"
@@ -281,12 +290,6 @@ rm delugevpn/config/core.conf~ > /dev/null 2>&1
 perl -i -pe 's/"allow_remote": false,/"allow_remote": true,/g'  delugevpn/config/core.conf
 perl -i -pe 's/"move_completed": false,/"move_completed": true,/g'  delugevpn/config/core.conf
 docker start delugevpn > /dev/null 2>&1
-
-# Configure FlareSolverr URL for Jackett
-while [ ! -f jackett/Jackett/ServerConfig.json ]; do sleep 1; done
-docker stop jackett > /dev/null 2>&1
-perl -i -pe 's/"FlareSolverrUrl": ".*",/"FlareSolverrUrl": "http:\/\/'"$locip"':8191",/g' jackett/Jackett/ServerConfig.json
-docker start jackett > /dev/null 2>&1
 
 # Configure NZBGet
 [ -d "content/nbzget" ] && mv content/nbzget/* content/ && rmdir content/nbzget

@@ -50,24 +50,6 @@ services:
         - '/etc/localtime:/etc/localtime:ro'
 
   # ----------------------------------------
-  # JACKETT
-  # ----------------------------------------
-  jackett:
-    image: lscr.io/linuxserver/jackett
-    container_name: jackett
-    restart: unless-stopped
-    network_mode: "bridge"
-    ports:
-        - '${IP_ADDRESS}:9117:9117'
-    environment:
-        - PUID=${PUID}
-        - PGID=${PGID}
-    volumes:
-        - './jackett:/config'
-        - '${DLDIR}/completed:/downloads'
-        - '/etc/localtime:/etc/localtime:ro'
-
-  # ----------------------------------------
   # JELLYFIN
   # ----------------------------------------
   jellyfin:
@@ -247,6 +229,25 @@ services:
         - '${DLDIR}/completed:/data/completed'
         - '${MOVIEDIR}:/movies'
         - '/etc/localtime:/etc/localtime:ro'
+
+  # ----------------------------------------
+  # READARR
+  # ----------------------------------------
+  readarr:
+    image: lscr.io/linuxserver/readarr:develop
+    container_name: readarr
+    restart: unless-stopped
+    ports:
+      - 8787:8787
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - './readarr:/config'
+      - '${DLDIR}/completed:/data/completed'
+      - '${BOOKDIR}:/books'
+      - '/etc/localtime:/etc/localtime:ro'
 
   # ----------------------------------------
   # SONARR
