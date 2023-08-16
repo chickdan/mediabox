@@ -41,7 +41,7 @@ fi
 if [ -e 1.env ]; then
     # Give updated Message
     printf "Docker Compose and Mediabox have been updated.\\n\\n"
-    # Grab the CouchPotato, NBZGet, & PIA usernames & passwords to reuse
+    # Grab the NBZGet, & PIA usernames & passwords to reuse
     daemonun=$(grep CPDAEMONUN 1.env | cut -d = -f2)
     daemonpass=$(grep CPDAEMONPASS 1.env | cut -d = -f2)
     piauname=$(grep PIAUNAME 1.env | cut -d = -f2)
@@ -157,42 +157,22 @@ if [ -z "$musicdirectory" ]; then
     musicdirectory="$PWD/content/music"
 fi
 
-# Adjust for Container name changes
-[ -d "sickrage/" ] && mv sickrage/ sickchill  # Switch from Sickrage to SickChill
-
-mkdir -p couchpotato
 mkdir -p delugevpn
 mkdir -p delugevpn/config/openvpn
-mkdir -p duplicati
-mkdir -p duplicati/backups
-mkdir -p emby
-mkdir -p filebrowser
-mkdir -p flaresolverr
-mkdir -p glances
-mkdir -p headphones
 mkdir -p historical/env_files
-mkdir -p homer
 mkdir -p jackett
 mkdir -p jellyfin
 mkdir -p lidarr
-mkdir -p metube
-mkdir -p minio
 mkdir -p nzbget
 mkdir -p nzbhydra2
-mkdir -p ombi
 mkdir -p overseerr
 mkdir -p "plex/Library/Application Support/Plex Media Server/Logs"
 mkdir -p portainer
 mkdir -p prowlarr
 mkdir -p radarr
-mkdir -p requestrr
-mkdir -p sickchill
 mkdir -p sonarr
-mkdir -p speedtest
-mkdir -p sqlitebrowser
 mkdir -p tautulli
 mkdir -p tdarr
-mkdir -p tubesync
 
 # Create menu - Select and Move the PIA VPN files
 echo "The following PIA Servers are avialable that support port-forwarding (for DelugeVPN); Please select one:"
@@ -264,19 +244,6 @@ echo "VPN_REMOTE=$vpnremote"
 echo ".env file creation complete"
 printf "\\n\\n"
 
-# Adjust for the Tautulli replacement of PlexPy
-docker rm -f plexpy > /dev/null 2>&1
-# Adjust for the Watchtower replacement of Ouroboros
-docker rm -f ouroboros > /dev/null 2>&1
-# Adjust for old uhttpd web container - Noted in issue #47
-docker rm -f uhttpd > /dev/null 2>&1
-[ -d "www/" ] && mv www/ historical/www/
-# Adjust for removal of Muximux
-docker rm -f muximux > /dev/null 2>&1
-[ -d "muximux/" ] && mv muximux/ historical/muximux/
-# Move back-up .env files
-mv 20*.env historical/env_files/ > /dev/null 2>&1
-mv historical/20*.env historical/env_files/ > /dev/null 2>&1
 # Remove files after switch to using Prep folder
 rm -f mediaboxconfig.php > /dev/null 2>&1
 rm -f settings.ini.php > /dev/null 2>&1
@@ -339,33 +306,6 @@ echo "NZBGETUN=$daemonun"
 echo "NZBGETPASS=$daemonpass"
 } >> .env
 
-# Configure Homer settings and files
-while [ ! -f homer/config.yml ]; do sleep 1; done
-docker stop homer > /dev/null 2>&1
-cp prep/config.yml homer/config.yml
-cp prep/mediaboxconfig.html homer/mediaboxconfig.html
-cp prep/portmap.html homer/portmap.html
-cp prep/icons/* homer/icons/
-sed '/^PIA/d' < .env > homer/env.txt # Pull PIA creds from the displayed .env file
-perl -i -pe "s/thishost/$thishost/g" homer/config.yml
-perl -i -pe "s/locip/$locip/g" homer/config.yml
-perl -i -pe "s/locip/$locip/g" homer/mediaboxconfig.html
-perl -i -pe "s/daemonun/$daemonun/g" homer/mediaboxconfig.html
-perl -i -pe "s/daemonpass/$daemonpass/g" homer/mediaboxconfig.html
-docker start homer > /dev/null 2>&1
-
-# If PlexPy existed - copy plexpy.db to Tautulli
-if [ -e plexpy/plexpy.db ]; then
-    docker stop tautulli > /dev/null 2>&1
-    mv tautulli/tautulli.db tautulli/tautulli.db.orig
-    cp plexpy/plexpy.db tautulli/tautulli.db
-    mv plexpy/plexpy.db plexpy/plexpy.db.moved
-    docker start tautulli > /dev/null 2>&1
-    mv plexpy/ historical/plexpy/
-fi
-if [ -e plexpy/plexpy.db.moved ]; then # Adjust for missed moves
-    mv plexpy/ historical/plexpy/
-fi
 
 # Create Port Mapping file
 for i in $(docker ps --format {{.Names}} | sort); do printf "\n === $i Ports ===\n" && docker port "$i"; done > homer/ports.txt
